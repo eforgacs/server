@@ -79,6 +79,10 @@ class MatchmakerQueue:
     def initialize(self):
         asyncio.create_task(self.queue_pop_timer())
 
+    @property
+    def num_players(self) -> int:
+        return sum(len(search.players) for search in self._queue.keys())
+
     async def iter_matches(self):
         """ Asynchronously yields matches as they become available """
 
@@ -147,7 +151,7 @@ class MatchmakerQueue:
     async def find_matches(self) -> None:
         self._logger.info("Searching for matches: %s", self.name)
 
-        if len(self._queue) < 2 * self.team_size:
+        if self.num_players < 2 * self.team_size:
             return
 
         searches = self.find_teams()
@@ -214,7 +218,7 @@ class MatchmakerQueue:
             "queue_pop_time": datetime.fromtimestamp(
                 self.timer.next_queue_pop, timezone.utc
             ).isoformat(),
-            "num_players": sum(len(search.players) for search in self._queue.keys()),
+            "num_players": self.num_players,
             "boundary_80s": [search.boundary_80 for search in self._queue.keys()],
             "boundary_75s": [search.boundary_75 for search in self._queue.keys()],
             # TODO: Remove, the client should query the API for this
